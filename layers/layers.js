@@ -2,16 +2,10 @@ var wms_layers = [];
 
 
         var lyr_OpenStreetMap_0 = new ol.layer.Tile({
-            'title': 'OpenStreetMap',
-            'type':'base',
+            // no 'title' property so it will not appear in the layer switcher
             'opacity': 1.000000,
-            
-            
-            source: new ol.source.XYZ({
-            attributions: ' ',
-                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-            })
-        });
+            source: new ol.source.OSM()
+});
 var format_PropertyValuationsPolygons_1 = new ol.format.GeoJSON();
 var features_PropertyValuationsPolygons_1 = format_PropertyValuationsPolygons_1.readFeatures(json_PropertyValuationsPolygons_1, 
             {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
