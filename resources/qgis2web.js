@@ -1,10 +1,9 @@
-
 var map = new ol.Map({
     target: 'map',
     renderer: 'canvas',
     layers: layersList,
     view: new ol.View({
-         maxZoom: 28, minZoom: 1
+         maxZoom: 20, minZoom: 1
     })
 });
 
@@ -534,7 +533,6 @@ var bottomAttributionUl = bottomAttribution.element.querySelector('ul');
 if (bottomAttributionUl) {
   bottomAttribution.element.insertBefore(attributionList, bottomAttributionUl);
 }
-
 
 // Disable "popup on hover" or "highlight on hover" if ol-control mouseover
 var preDoHover = doHover;

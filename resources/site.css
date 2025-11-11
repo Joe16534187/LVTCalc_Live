@@ -1,0 +1,111 @@
+/* ...existing code... */
+html, body {
+    background-color: #ffffff;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* map element full height */
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+/* OpenLayers control styling */
+.ol-control > * {
+    background-color: #f8f8f8 !important;
+    color: #444444 !important;
+    border-radius: 0;
+}
+.ol-attribution a,
+.gcd-gl-input::placeholder,
+.search-layer-input-search::placeholder {
+    color: #444444 !important;
+}
+.search-layer-input-search {
+    background-color: #f8f8f8 !important;
+}
+.ol-control > *:focus,
+.ol-control > *:hover {
+    background-color: rgba(248, 248, 248, 0.7) !important;
+}
+.ol-control {
+    background-color: rgba(255,255,255,0.4) !important;
+    padding: 2px !important;
+}
+
+/* Layout grid */
+.container {
+    display: grid;
+    grid-template-columns: 70% 30%;
+    grid-auto-rows: 100vh;
+    background-color: #ffffff;
+}
+
+/* Right-hand sidebar */
+.sidebar {
+    /* medium metallic grey border around the right-hand panel */
+    border: 5px solid #9ea7ad;
+    padding: 1rem;
+    box-sizing: border-box; /* keep padding inside the column width */
+    background: rgb(255, 255, 255);
+    /* optional subtle metallic sheen */
+    background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+}
+
+/* Sidebar heading */
+.sidebar h1 {
+    text-align: center;
+    margin: 0;
+}
+.sidebar p, .sidebar .sidebar-intro {
+    text-align: justify;
+    margin-top: 0.75rem;
+    margin-bottom: 0;
+    color: #333;
+    line-height: 1.45;
+    font-size: 14px;
+}
+
+/* Selected property section in the right-hand sidebar */
+.selected-info {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    text-align: justify;           /* fully justified text as requested */
+    font-size: 14px;
+    color: #333;
+}
+
+/* Match paragraph width/flow in the sidebar */
+.selected-info h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left; /* heading left aligned, paragraph content justified */
+}
+
+/* attribute list styling */
+.selected-info .attrs {
+    margin: 0;
+    padding: 0;
+}
+.selected-info .attrs dt {
+    font-weight: 600;
+    display: inline;
+}
+.selected-info .attrs dd {
+    display: inline;
+    margin: 0 0 0.5rem 0.5rem;
+    color: #222;
+}
+
+/* empty state */
+.selected-info .empty {
+    margin: 0;
+    color: #666;
+}
+
+/* ...existing code... */
