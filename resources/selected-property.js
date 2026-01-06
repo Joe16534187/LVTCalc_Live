@@ -19,6 +19,31 @@
     });
 })();
 
+// Number formatting helper – reusable everywhere
+function formatNumber(value, decimals = 0) {
+    if (value === null || value === undefined || value === '') return '';
+    const num = Number(value);
+    if (!isFinite(num)) return '';
+
+    const rounded = Number(num.toFixed(decimals));
+
+    // ###,### style with commas
+    return rounded.toLocaleString('en-GB', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+}
+
+// Format only if the value is numeric, otherwise return as-is
+function formatIfNumeric(value, decimals = 0) {
+    if (value === null || value === undefined || value === '') return '';
+    const num = Number(value);
+    if (!isFinite(num)) {
+        return value; // leave non-numeric fields alone
+    }
+    return formatNumber(num, decimals);
+}
+
 (function(){
     // Wait for the map variable to exist, then attach click handler.
     function waitForMap(cb, timeoutMs) {
@@ -50,11 +75,15 @@
             return !skip[k] && k !== 'feature' && k !== 'style' && k !== 'geometry' && k !== 'layer';
         });
         if (!keys.length) return '<p class="empty">No attributes available for this feature.</p>';
+
         var html = '<dl class="attrs">';
         keys.forEach(function(k){
             var v = props[k];
             if (typeof v === 'object') return;
-            html += '<dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(v === undefined ? '' : v) + '</dd>';
+
+            // Try to format numeric values as ###,###
+            var displayValue = formatIfNumeric(v, 0); // change to 2 if you want 2dp
+            html += '<dt>' + escapeHtml(k) + '</dt><dd>' + escapeHtml(displayValue === undefined ? '' : displayValue) + '</dd>';
         });
         html += '</dl>';
         return html;
