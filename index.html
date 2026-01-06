@@ -36,6 +36,94 @@
                         <p class="empty">Please select a property on the map to see its details here.</p>
                     </div>
                 </section>
+                <!-- Input Section -->
+                
+
+
+
+                <section class="tax-selector">
+                    <h2>Choose which taxes to replace with a LVT</h2>
+                    <p>And enter how much of each you currently pay per year</p>
+                        <div class="tax-row">
+                            <label>
+                            <input type="checkbox" id="tax-council">
+                            Council Tax
+                            </label>
+                             <input
+                                type="text"
+                                inputmode="decimal"
+                                id="tax-council-input"
+                                class="tax-input tax-money"
+                                placeholder="£"
+                                maxlength="12"
+                                autocomplete="off">
+                        </div>
+                        <div class="tax-row">
+                            <label>
+                            <input type="checkbox" id="tax-income">
+                             Income Tax
+                            </label>
+                            <input
+                                type="text"
+                                inputmode="decimal"
+                                id="tax-income-input"
+                                class="tax-input tax-money"
+                                placeholder="£"
+                                maxlength="12"
+                                autocomplete="off">
+                         </div>
+
+                        <div class="tax-row">
+                            <label>
+                                <input type="checkbox" id="tax-vat">
+                                VAT
+                            </label>
+                            <input
+                                type="text"
+                                inputmode="decimal"
+                                id="tax-vat-input"
+                                class="tax-input tax-money"
+                                placeholder="£"
+                                maxlength="12"
+                                autocomplete="off">
+                        </div>
+                </section>
+                
+                <section id="tax-graph" class="tax-graph">
+                <div class="tax-graph-inner">
+                    <!-- Start value -->
+                    <div class="tax-graph-column">
+                        <div class="tax-graph-bar">
+                            <div class="tax-graph-bar-fill tax-graph-bar-fill-current" id="tax-current-fill"></div>
+                        </div>
+                        <p class="tax-graph-label">Tax you currently pay</p>
+                        <p class="tax-graph-value" id="tax-current-value">£0</p>
+                    </div>
+
+                    <!-- Bridge / difference -->
+                    <div class="tax-graph-column">
+                        <div class="tax-graph-bar">
+                            <div class="tax-graph-bar-fill tax-graph-bar-fill-diff" id="tax-diff-fill"></div>
+                        </div>
+                        <p class="tax-graph-label" id="tax-diff-label">Difference</p>
+                        <p class="tax-graph-value" id="tax-diff-value">£0</p>
+                    </div>
+
+                    <!-- End value -->
+                    <div class="tax-graph-column">
+                        <div class="tax-graph-bar">
+                            <div class="tax-graph-bar-fill tax-graph-bar-fill-lvt" id="tax-lvt-fill"></div>
+                        </div>
+                        <p class="tax-graph-label">Your share of LVT</p>
+                        <p class="tax-graph-value" id="tax-lvt-value">£0</p>
+                    </div>
+                </div>
+
+                <p class="tax-summary" id="tax-summary-text">
+                    Select taxes and a property to see your result.
+                </p>
+               </section>
+
 
                 <!-- "More Information" button (fixed at bottom of sidebar) -->
                 <div class="sidebar-footer">
@@ -67,11 +155,16 @@
         <script src="layers/PropertyValuationsPolygons_1.js"></script>
         <script src="layers/PropertyValuations_2.js"></script>
         <script src="./resources/selected-property.js"></script>
+        <script src="./resources/tax-calculator.js"></script>  
         <script src="styles/PropertyValuationsPolygons_1_style.js"></script><script src="styles/PropertyValuations_2_style.js"></script>
         <script src="./layers/layers.js" type="text/javascript"></script> 
         <script src="./resources/Autolinker.min.js"></script>
         <script src="./resources/qgis2web.js"></script>  
-        
+
+
+
+
+ 
     </body>
 </html>
 
