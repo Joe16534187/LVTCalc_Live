@@ -1,172 +1,181 @@
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-        <meta name="mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <link rel="stylesheet" href="./resources/ol.css">
-        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
-        <link href="resources/photon-geocoder-autocomplete.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
-        <link rel="stylesheet" href="./resources/qgis2web.css">
-        <link rel="stylesheet" href="./resources/site.css">
-    </head>
-    <body>
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Land Value Tax Calculator - Scotland</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet">
+    <style>
+        #map { position: relative; width: 100%; height: 100%; }
+        .maplibregl-map { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <header>
         <div class="container">
-            
-            <!--Grid column 1-->
-            <div id="map">
-                <div id="popup" class="ol-popup">
-                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-                <div id="popup-content"></div>
-                </div>
-            </div>
-
-            <!--Grid column 2-->
-            <div class="sidebar">
-                <h1>Land Value Tax Calculator</h1>
-                <p class="sidebar-intro">On this website you can see an estimate for the value of land across different locations in the UK. These values have been calculated using open source data and statistical analysis.</p>
-
-                <!-- Selected property mirror (populated from map popup / feature click) -->
-                <section id="selected-info" class="selected-info" aria-live="polite">
-                    <h2>Selected property</h2>
-                    <div id="selected-content">
-                        <p class="empty">Please select a property on the map to see its details here.</p>
-                    </div>
-                </section>
-                <!-- Input Section -->
-                
-
-
-
-                <section class="tax-selector">
-                    <h2>Choose which taxes to replace with a LVT</h2>
-                    <p>And enter how much of each you currently pay per year</p>
-                        <div class="tax-row">
-                            <label>
-                            <input type="checkbox" id="tax-council">
-                            Council Tax
-                            </label>
-                             <input
-                                type="text"
-                                inputmode="decimal"
-                                id="tax-council-input"
-                                class="tax-input tax-money"
-                                placeholder="£"
-                                maxlength="12"
-                                autocomplete="off">
-                        </div>
-                        <div class="tax-row">
-                            <label>
-                            <input type="checkbox" id="tax-income">
-                             Income Tax
-                            </label>
-                            <input
-                                type="text"
-                                inputmode="decimal"
-                                id="tax-income-input"
-                                class="tax-input tax-money"
-                                placeholder="£"
-                                maxlength="12"
-                                autocomplete="off">
-                         </div>
-
-                        <div class="tax-row">
-                            <label>
-                                <input type="checkbox" id="tax-vat">
-                                VAT
-                            </label>
-                            <input
-                                type="text"
-                                inputmode="decimal"
-                                id="tax-vat-input"
-                                class="tax-input tax-money"
-                                placeholder="£"
-                                maxlength="12"
-                                autocomplete="off">
-                        </div>
-                </section>
-                
-                <section id="tax-graph" class="tax-graph">
-                <div class="tax-graph-inner">
-                    <!-- Start value -->
-                    <div class="tax-graph-column">
-                        <div class="tax-graph-bar">
-                            <div class="tax-graph-bar-fill tax-graph-bar-fill-current" id="tax-current-fill"></div>
-                        </div>
-                        <p class="tax-graph-label">Tax you currently pay</p>
-                        <p class="tax-graph-value" id="tax-current-value">£0</p>
-                    </div>
-
-                    <!-- Bridge / difference -->
-                    <div class="tax-graph-column">
-                        <div class="tax-graph-bar">
-                            <div class="tax-graph-bar-fill tax-graph-bar-fill-diff" id="tax-diff-fill"></div>
-                        </div>
-                        <p class="tax-graph-label" id="tax-diff-label">Difference</p>
-                        <p class="tax-graph-value" id="tax-diff-value">£0</p>
-                    </div>
-
-                    <!-- End value -->
-                    <div class="tax-graph-column">
-                        <div class="tax-graph-bar">
-                            <div class="tax-graph-bar-fill tax-graph-bar-fill-lvt" id="tax-lvt-fill"></div>
-                        </div>
-                        <p class="tax-graph-label">Your share of LVT</p>
-                        <p class="tax-graph-value" id="tax-lvt-value">£0</p>
-                    </div>
-                </div>
-
-                <p class="tax-summary" id="tax-summary-text">
-                    Select taxes and a property to see your result.
-                </p>
-               </section>
-
-
-                <!-- "More Information" button (fixed at bottom of sidebar) -->
-                <div class="sidebar-footer">
-                    <button id="more-info-btn" class="more-info-btn" type="button" aria-haspopup="dialog" aria-controls="more-info-modal">
-                        More Information
-                    </button>
-                </div>
-            </div>  
-        </div>  
-        
-        <!-- More Information modal -->
-        <div id="more-info-modal" class="more-info-modal" role="dialog" aria-modal="true" aria-labelledby="more-info-title" aria-hidden="true">
-            <div class="more-info-overlay" data-close="true"></div>
-            <div class="more-info-content" role="document">
-                <button class="more-info-close" id="more-info-close" type="button" aria-label="Close">×</button>
-                <h2 id="more-info-title">More information</h2>
-                <div class="more-info-body">
-                    <p>This site provides estimates of land value per square metre based on open data and statistical models. Values are indicative and intended for research and planning purposes only.</p>
-                    <p>For methodology, data sources, and limitations, visit the project documentation or contact the maintainers.</p>
-                </div>
-            </div>
+            <h1>Land Value Tax Calculator</h1>
+            <p class="subtitle">Compare your current tax burden with a Land Value Tax system</p>
         </div>
+    </header>
 
-        <script src="resources/qgis2web_expressions.js"></script>
-        <script src="./resources/functions.js"></script>
-        <script src="./resources/ol.js"></script>
-        <script src="./resources/ol-layerswitcher.js"></script>
-        <script src="resources/photon-geocoder-autocomplete.min.js"></script>
-        <script src="layers/PropertyValuationsPolygons_1.js"></script>
-        <script src="layers/PropertyValuations_2.js"></script>
-        <script src="./resources/selected-property.js"></script>
-        <script src="./resources/tax-calculator.js"></script>  
-        <script src="styles/PropertyValuationsPolygons_1_style.js"></script><script src="styles/PropertyValuations_2_style.js"></script>
-        <script src="./layers/layers.js" type="text/javascript"></script> 
-        <script src="./resources/Autolinker.min.js"></script>
-        <script src="./resources/qgis2web.js"></script>  
+    <main>
+        <div class="layout-grid">
+            <!-- Map Section -->
+            <div class="map-container">
+                <div id="map"></div>
 
+                <!-- Loading Indicator -->
+                <div id="loadingOverlay" class="loading-overlay">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Loading properties...</p>
+                        <p class="loading-subtext">This may take a few moments</p>
+                    </div>
+                </div>
 
+                <div class="map-legend">
+                    <div class="legend-title">Land Value per m²</div>
+                    <div class="legend-items">
+                        <div class="legend-item"><span class="legend-colour" style="background: #1e3a8a;"></span><span class="legend-label">£0 – £100</span></div>
+                        <div class="legend-item"><span class="legend-colour" style="background: #2563eb;"></span><span class="legend-label">£100 – £200</span></div>
+                        <div class="legend-item"><span class="legend-colour" style="background: #0ea5e9;"></span><span class="legend-label">£200 – £400</span></div>
+                        <div class="legend-item"><span class="legend-colour" style="background: #06b6d4;"></span><span class="legend-label">£400 – £800</span></div>
+                        <div class="legend-item"><span class="legend-colour" style="background: #14b8a6;"></span><span class="legend-label">£800 – £1,600</span></div>
+                        <div class="legend-item"><span class="legend-colour" style="background: #10b981;"></span><span class="legend-label">£1,600 – £3,200</span></div>
+                        <div class="legend-item"><span class="legend-colour" style="background: #22c55e;"></span><span class="legend-label">£3,200+</span></div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <!-- Property Details Panel -->
+                <div class="panel">
+                    <h2>Property Details</h2>
+                    <div id="propertyDetails">
+                        <p class="placeholder-text">Click on a property to view details</p>
+                    </div>
+                </div>
 
- 
-    </body>
+                <!-- Tax Comparison Calculator -->
+                <div class="panel">
+                    <h2>Tax Comparison</h2>
+                    <div id="taxCalculator">
+                        <p class="info-text">Select a property above to compare taxes</p>
+
+                        <div class="calculator-form" id="calculatorForm" style="display: none;">
+                            <p class="instruction-text">Select which taxes you want to replace with Land Value Tax:</p>
+
+                            <div class="tax-option">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="includeCouncilTax" checked>
+                                    <span class="checkbox-text">Council Tax (annual)</span>
+                                </label>
+                                <div class="input-group">
+                                    <label for="actualCouncilTax">You currently pay:</label>
+                                    <div class="input-wrapper">
+                                        <span class="currency-symbol">£</span>
+                                        <input type="number" id="actualCouncilTax" placeholder="0.00" step="0.01" min="0">
+                                        <span class="input-suffix">per year</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tax-option">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="includeLBTT">
+                                    <span class="checkbox-text">LBTT (one-time purchase)</span>
+                                </label>
+                                <div class="input-group">
+                                    <label for="actualLBTT">You paid:</label>
+                                    <div class="input-wrapper">
+                                        <span class="currency-symbol">£</span>
+                                        <input type="number" id="actualLBTT" placeholder="0.00" step="0.01" min="0">
+                                        <span class="input-suffix">when purchased</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="note-text">
+                                <strong>Note:</strong> LBTT is a one-time cost. Consider this when comparing with annual Council Tax.
+                            </p>
+
+                            <button id="calculateBtn" class="calculate-btn">Calculate Comparison</button>
+                        </div>
+
+                        <div id="comparisonResults" style="display: none;">
+                            <h3>Your Comparison</h3>
+
+                            <div class="results-summary">
+                                <div class="result-row">
+                                    <span class="result-label">Current Total Tax:</span>
+                                    <span class="result-value" id="totalCurrent">£0.00</span>
+                                </div>
+                                <div class="result-row">
+                                    <span class="result-label">LVT Total:</span>
+                                    <span class="result-value" id="totalLVT">£0.00</span>
+                                </div>
+                                <div class="result-row highlight">
+                                    <span class="result-label" id="differenceLabel">Difference:</span>
+                                    <span class="result-value" id="totalDifference">£0.00</span>
+                                </div>
+                            </div>
+
+                            <div class="results-breakdown">
+                                <h4>Breakdown</h4>
+                                <table class="breakdown-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tax Type</th>
+                                            <th>Current</th>
+                                            <th>Under LVT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="breakdownTableBody"></tbody>
+                                </table>
+                            </div>
+
+                            <button id="resetBtn" class="reset-btn">Calculate Another Property</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Information Panel -->
+                <div class="panel info-panel">
+                    <button class="info-toggle" id="infoToggle">
+                        <span>About This Calculator</span>
+                        <span class="toggle-icon">+</span>
+                    </button>
+                    <div class="info-content" id="infoContent">
+                        <h3>About This Calculator</h3>
+                        <p>This calculator lets you explore estimated land values for properties across Aberdeen and Aberdeenshire, and compare what you currently pay in Council Tax and/or Land and Buildings Transaction Tax (LBTT) against what you might pay under a Land Value Tax system.</p>
+
+                        <h4>What is Land Value Tax?</h4>
+                        <p>Land Value Tax (LVT) is a levy on the unimproved value of land, excluding buildings and other developments. Unlike Council Tax, it cannot be avoided by leaving land idle, and is widely regarded by economists as an efficient and equitable form of taxation.</p>
+
+                        <h4>Methodology</h4>
+                        <p>Land values were estimated using two complementary approaches applied to 1,586 properties with known sale prices: a hedonic regression model estimating the marginal contribution of location, plot size, and accessibility to price (R² = 0.41); and a gradient boosting model using feature importance scores (R² = 0.64). Results were averaged to produce a combined land value estimate. LVT equivalents for each tax were calculated by dividing total regional tax revenues (Council Tax: £353m; LBTT: £53m) by estimated total regional land value (£26.6bn), producing a rate per £1,000 of land value applied to each property proportionally.</p>
+
+                        <h4>Next Steps</h4>
+                        <p>This pilot covers Aberdeen and Aberdeenshire. Future development aims to extend the analysis across Scotland and ultimately the rest of the UK, incorporate additional taxes beyond property-based levies — including income tax — to give a fuller picture of what a shift to LVT might mean in practice, and refine the underlying land value estimation methodology.</p>
+
+                        <h4>Acknowledgements</h4>
+                        <p>Transaction data: Registers of Scotland. Tax revenue data: Aberdeen City Council, Aberdeenshire Council, and Scottish Revenue. Accessibility and demographic data: Scottish Government and Ordnance Survey.</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Land Value Tax Calculator | Data: Aberdeenshire &amp; Aberdeen | For demonstration purposes only</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/pmtiles@3/dist/pmtiles.js"></script>
+    <script src="app.js"></script>
+</body>
 </html>
-
-
-
