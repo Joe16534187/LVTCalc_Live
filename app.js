@@ -144,12 +144,12 @@ function showPropertyDetails(props) {
                 <span class="info-value">${props.Area ? Number(props.Area).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Land Value per m²</span>
-                <span class="info-value">${formatCurrency(props.Land_Value_per_m2)}</span>
-            </div>
-            <div class="info-row">
                 <span class="info-label">Land Value</span>
                 <span class="info-value">${formatCurrency(props.Land_Value_Combined)}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Land Value per m²</span>
+                <span class="info-value">${formatCurrency(props.Land_Value_per_m2)}</span>
             </div>
         </div>
     `;
