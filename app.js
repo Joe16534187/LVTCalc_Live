@@ -4,7 +4,7 @@ let selectedFeatureId = null;
 let selectedProperties = null;
 
 const PMTILES_URL = 'https://pub-8a44c156b385402db64e9c2f62df723f.r2.dev/properties.pmtiles';
-const SOURCE_LAYER = 'properties_slim';
+const SOURCE_LAYER = 'properties_stripped';
 
 // Register the PMTiles protocol with MapLibre before the map is created.
 // MapLibre will resolve any pmtiles:// URL by making HTTP range requests
@@ -150,10 +150,6 @@ function showPropertyDetails(props) {
             <div class="info-row">
                 <span class="info-label">Land Value</span>
                 <span class="info-value">${formatCurrency(props.Land_Value_Combined)}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Building Value</span>
-                <span class="info-value">${formatCurrency(props.Building_Value_Combined)}</span>
             </div>
         </div>
     `;
