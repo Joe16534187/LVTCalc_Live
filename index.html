@@ -3,19 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Land Value Tax Calculator - Scotland</title>
+    <title>Land Value Tax Calculator &#8212; England &amp; Wales</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet">
     <style>
         #map { position: relative; width: 100%; height: 100%; }
         .maplibregl-map { width: 100%; height: 100%; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.open { display: flex; }
+        .modal-box { background: #fff; border-radius: 8px; max-height: 90vh; overflow-y: auto; padding: 1.5rem 1.75rem; position: relative; width: 100%; max-width: 540px; }
+        .modal-box.modal-wide { max-width: 960px; }
+        .modal-close { position: absolute; top: 0.75rem; right: 0.75rem; background: none; border: none; font-size: 1.4rem; cursor: pointer; line-height: 1; color: #555; }
+        .modal-close:hover { color: #000; }
+        .modal-table-wrap { overflow-x: auto; }
+        .modal-table-wrap table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+        .modal-table-wrap th, .modal-table-wrap td { border: 1px solid #ddd; padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
+        .modal-table-wrap th { background: #f3f4f6; font-weight: 600; }
+        .modal-table-wrap tr:nth-child(even) td { background: #f9fafb; }
+        .modal-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.25rem; }
+        .modal-charts img { width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 4px; }
+        .modal-link { color: inherit; text-decoration: underline; font-size: 0.88rem; }
     </style>
 </head>
 <body>
     <header>
         <div class="container">
             <h1>Land Value Tax Calculator</h1>
-            <p class="subtitle">Compare your current tax burden with a Land Value Tax system</p>
+            <p class="subtitle">Compare the taxes you currently pay to a Land Value Tax system</p>
         </div>
     </header>
 
@@ -24,6 +38,14 @@
             <!-- Map Section -->
             <div class="map-container">
                 <div id="map"></div>
+
+                <!-- View Mode Toggle -->
+                <div id="viewToggle" class="view-toggle" style="display:none">
+                    <div class="view-toggle-seg">
+                        <button id="viewToggleBtnGrid" class="view-toggle-seg-btn active">Grid view</button>
+                        <button id="viewToggleBtnParcel" class="view-toggle-seg-btn">Parcel view</button>
+                    </div>
+                </div>
 
                 <!-- Loading Indicator -->
                 <div id="loadingOverlay" class="loading-overlay">
@@ -35,15 +57,16 @@
                 </div>
 
                 <div class="map-legend">
-                    <div class="legend-title">Land Value per m²</div>
-                    <div class="legend-items">
-                        <div class="legend-item"><span class="legend-colour" style="background: #1e3a8a;"></span><span class="legend-label">£0 – £100</span></div>
-                        <div class="legend-item"><span class="legend-colour" style="background: #2563eb;"></span><span class="legend-label">£100 – £200</span></div>
-                        <div class="legend-item"><span class="legend-colour" style="background: #0ea5e9;"></span><span class="legend-label">£200 – £400</span></div>
-                        <div class="legend-item"><span class="legend-colour" style="background: #06b6d4;"></span><span class="legend-label">£400 – £800</span></div>
-                        <div class="legend-item"><span class="legend-colour" style="background: #14b8a6;"></span><span class="legend-label">£800 – £1,600</span></div>
-                        <div class="legend-item"><span class="legend-colour" style="background: #10b981;"></span><span class="legend-label">£1,600 – £3,200</span></div>
-                        <div class="legend-item"><span class="legend-colour" style="background: #22c55e;"></span><span class="legend-label">£3,200+</span></div>
+                    <div class="legend-title">Land Value / m&#178;</div>
+                    <div class="legend-body">
+                        <div class="legend-gradient"></div>
+                        <div class="legend-labels">
+                            <span>&#163;20,000+</span>
+                            <span>&#163;5,000</span>
+                            <span>&#163;1,200</span>
+                            <span>&#163;150</span>
+                            <span>&#163;0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -53,92 +76,214 @@
                 <!-- Property Details Panel -->
                 <div class="panel">
                     <h2>Property Details</h2>
+                    <p id="gridViewHint" class="grid-view-hint" style="display:none">In grid view, the data is shown for a representative plot of 150&#8239;m&#178; located within the selected grid area.</p>
                     <div id="propertyDetails">
-                        <p class="placeholder-text">Click on a property to view details</p>
+                        <p class="placeholder-text">Click a property or grid cell on the map to begin.</p>
                     </div>
                 </div>
 
-                <!-- Tax Comparison Calculator -->
+                <!-- Tax Comparison -->
                 <div class="panel">
                     <h2>Tax Comparison</h2>
-                    <div id="taxCalculator">
-                        <p class="info-text">Select a property above to compare taxes</p>
+                    <p class="calculate-hint hidden" id="calculateHint">Select taxes and enter what you currently pay, then click Calculate.</p>
+                    <div id="taxPlaceholder">
+                        <p class="placeholder-text">Click a property or grid cell on the map to begin.</p>
+                    </div>
+                    <div id="taxCalculator" class="hidden">
 
-                        <div class="calculator-form" id="calculatorForm" style="display: none;">
-                            <p class="instruction-text">Select which taxes you want to replace with Land Value Tax:</p>
+                        <!-- Earnings -->
+                        <div class="tax-group">
+                            <div class="tax-group-header">Earnings</div>
 
-                            <div class="tax-option">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="includeCouncilTax" checked>
-                                    <span class="checkbox-text">Council Tax (annual)</span>
-                                </label>
-                                <div class="input-group">
-                                    <label for="actualCouncilTax">You currently pay:</label>
-                                    <div class="input-wrapper">
-                                        <span class="currency-symbol">£</span>
-                                        <input type="number" id="actualCouncilTax" placeholder="0.00" step="0.01" min="0">
-                                        <span class="input-suffix">per year</span>
-                                    </div>
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-income-tax" class="tax-check" data-annual="true" checked>
+                                <span class="tax-name">Income Tax</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-income-tax" placeholder="0" min="0" step="1">
+                                    <span class="tax-suffix">/yr</span>
                                 </div>
                             </div>
 
-                            <div class="tax-option">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="includeLBTT">
-                                    <span class="checkbox-text">LBTT (one-time purchase)</span>
-                                </label>
-                                <div class="input-group">
-                                    <label for="actualLBTT">You paid:</label>
-                                    <div class="input-wrapper">
-                                        <span class="currency-symbol">£</span>
-                                        <input type="number" id="actualLBTT" placeholder="0.00" step="0.01" min="0">
-                                        <span class="input-suffix">when purchased</span>
-                                    </div>
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-nic" class="tax-check" data-annual="true">
+                                <span class="tax-name">National Insurance</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-nic" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
                                 </div>
                             </div>
-
-                            <p class="note-text">
-                                <strong>Note:</strong> LBTT is a one-time cost. Consider this when comparing with annual Council Tax.
-                            </p>
-
-                            <button id="calculateBtn" class="calculate-btn">Calculate Comparison</button>
+                            <p class="tax-note">Include both employee and employer contributions</p>
                         </div>
 
-                        <div id="comparisonResults" style="display: none;">
-                            <h3>Your Comparison</h3>
+                        <!-- Capital -->
+                        <div class="tax-group">
+                            <div class="tax-group-header">Capital</div>
 
-                            <div class="results-summary">
-                                <div class="result-row">
-                                    <span class="result-label">Current Total Tax:</span>
-                                    <span class="result-value" id="totalCurrent">£0.00</span>
-                                </div>
-                                <div class="result-row">
-                                    <span class="result-label">LVT Total:</span>
-                                    <span class="result-value" id="totalLVT">£0.00</span>
-                                </div>
-                                <div class="result-row highlight">
-                                    <span class="result-label" id="differenceLabel">Difference:</span>
-                                    <span class="result-value" id="totalDifference">£0.00</span>
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-cgt" class="tax-check" data-annual="true">
+                                <span class="tax-name">Capital Gains Tax</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-cgt" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
                                 </div>
                             </div>
 
-                            <div class="results-breakdown">
-                                <h4>Breakdown</h4>
-                                <table class="breakdown-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Tax Type</th>
-                                            <th>Current</th>
-                                            <th>Under LVT</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="breakdownTableBody"></tbody>
-                                </table>
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-iht" class="tax-check" data-annual="true">
+                                <span class="tax-name">Inheritance Tax</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-iht" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Property -->
+                        <div class="tax-group">
+                            <div class="tax-group-header">Property</div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-council-tax" class="tax-check" data-annual="true" checked>
+                                <span class="tax-name">Council Tax</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-council-tax" placeholder="0" min="0" step="1">
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
                             </div>
 
-                            <button id="resetBtn" class="reset-btn">Calculate Another Property</button>
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-sdlt" class="tax-check" data-annual="false">
+                                <span class="tax-name">SDLT / LTT</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-sdlt" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix"></span>
+                                </div>
+                            </div>
+                            <p class="tax-note">One-time cost &#8212; not included in annual total</p>
+                        </div>
+
+                        <!-- Consumption -->
+                        <div class="tax-group">
+                            <div class="tax-group-header">Consumption</div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-vat" class="tax-check" data-annual="true">
+                                <span class="tax-name">VAT</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-vat" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-fuel" class="tax-check" data-annual="true">
+                                <span class="tax-name">Fuel Duty</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-fuel" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-alcohol" class="tax-check" data-annual="true">
+                                <span class="tax-name">Alcohol Duty</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-alcohol" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-tobacco" class="tax-check" data-annual="true">
+                                <span class="tax-name">Tobacco Duty</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-tobacco" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-ipt" class="tax-check" data-annual="true">
+                                <span class="tax-name">Insurance Premium Tax</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-ipt" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-ved" class="tax-check" data-annual="true">
+                                <span class="tax-name">Vehicle Excise Duty</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-ved" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-betting" class="tax-check" data-annual="true">
+                                <span class="tax-name">Betting &amp; Gaming</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-betting" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+
+                            <div class="tax-row">
+                                <input type="checkbox" id="tx-sdil" class="tax-check" data-annual="true">
+                                <span class="tax-name">Soft Drinks Levy</span>
+                                <div class="tax-input-wrap">
+                                    <span class="tax-pound">&#163;</span>
+                                    <input type="number" class="tax-input" id="val-sdil" placeholder="0" min="0" step="1" disabled>
+                                    <span class="tax-suffix">/yr</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live total -->
+                        <div class="tax-total-bar">
+                            <span class="tax-total-label">Annual total (selected)</span>
+                            <span class="tax-total-value" id="taxLiveTotal">&#163;0</span>
+                        </div>
+
+                        <button class="calculate-btn" id="calculateBtn" disabled>Calculate Comparison</button>
+
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="panel hidden" id="resultsPanel">
+                    <h2>Results</h2>
+                    <div class="results-summary">
+                        <div class="result-card">
+                            <div class="result-label">Current Tax</div>
+                            <div class="result-value" id="resCurrent">&#163;0</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">LVT Equivalent</div>
+                            <div class="result-value" id="resLvt">&#163;0</div>
+                        </div>
+                        <div class="result-card" id="resDiffCard">
+                            <div class="result-label">Difference</div>
+                            <div class="result-value" id="resDiff">&#163;0</div>
+                            <div class="result-sub" id="resDiffSub"></div>
                         </div>
                     </div>
+                    <button class="breakdown-toggle" id="breakdownToggle">Show breakdown &#9660;</button>
+                    <div id="breakdownTable" class="breakdown-wrap hidden"></div>
                 </div>
 
                 <!-- Information Panel -->
@@ -149,25 +294,21 @@
                     </button>
                     <div class="info-content" id="infoContent">
                         <h3>About This Calculator</h3>
-                        <p>This calculator lets you explore estimated land values for properties across Aberdeen and Aberdeenshire, and compare what you currently pay in Council Tax and/or Land and Buildings Transaction Tax (LBTT) against what you might pay under a Land Value Tax system.</p>
+                        <p>This calculator lets you explore estimated land values for properties across England and Wales, and compare the taxes you currently pay against what you might pay under a Land Value Tax system.</p>
 
                         <h4>What is Land Value Tax?</h4>
-                        <p>Land Value Tax (LVT) is a levy on the unimproved value of land, excluding buildings and other developments. Unlike Council Tax, it cannot be avoided by leaving land idle, and is widely regarded by economists as an efficient and equitable form of taxation.</p>
+                        <p>Land Value Tax (LVT) is a levy on the unimproved value of land, excluding buildings and other developments. It cannot be avoided, is easy to collect, and is widely regarded by economists as an efficient and equitable form of taxation.</p>
+
+                        <h4>How to use</h4>
+                        <p>Click a grid cell or property boundary on the map to select it. Check the taxes you currently pay, enter your annual amounts, and click Calculate. The calculator then shows the tax you might pay if the selected taxes were replaced with a land value tax.</p>
 
                         <h4>Methodology</h4>
-                        <p>Land values were estimated using a residual method. For each of 1,586 properties with known sale prices, building replacement cost was estimated based on property type, floor area, and construction characteristics. Land value was then derived as the residual — the transaction price minus the estimated building cost.</p>
-
-                        <p>A gradient boosting model was trained on these residual land values using only land-intrinsic features: location, plot area, distance to amenities, flood risk, and local income levels. This approach avoids contaminating land value estimates with building quality and achieves an in-sample R² of 0.919, producing a total estimated regional land value of £15.2bn (median: £95k per property; Gini coefficient: 0.302). Land shares vary plausibly by property type, ranging from a median of 41% for detached houses to 56% for flats.</p>
-
-                        <p>LVT equivalent rates are calculated by dividing total regional tax revenues (Council Tax: £353m; LBTT: £53m) by total estimated land value, producing annual rates of 2.33% and 2.68% respectively, applied proportionally to each property's estimated land value.</p>
-
-                        <p><a href="#" id="methodology-link" style="color: #2563eb;">View detailed analysis ↗</a></p>
-
-                        <h4>Next Steps</h4>
-                        <p>This pilot covers Aberdeen and Aberdeenshire. Future development aims to extend the analysis across Scotland and ultimately the rest of the UK, incorporate additional taxes beyond property-based levies — including income tax — to give a fuller picture of what a shift to LVT might mean in practice, and refine the underlying land value estimation methodology using EPC data for improved building cost estimates.</p>
+                        <p>Land values are estimated by decomposing each residential sale price into a building value component and a land value residual. Land values are then aggregated to a 100&#8239;m&#178; grid by referencing nearby transactions but blending towards an agricultural floor value where transaction data is sparse.</p>
+                        <p>Land value tax equivalent amounts are calculated by assuming the total government revenues remain the same, but the collected amount is weighted according to land values rather than the current basis for each tax.</p>
+                        <p><a href="#" class="modal-link" id="openMethodologyModal">More detail on methodology</a> &nbsp;|&nbsp; <a href="#" class="modal-link" id="openResultsModal">Results from land value modelling</a></p>
 
                         <h4>Acknowledgements</h4>
-                        <p>Transaction data: Registers of Scotland. Tax revenue data: Aberdeen City Council, Aberdeenshire Council, and Scottish Revenue. Accessibility and demographic data: Scottish Government and Ordnance Survey.</p>
+                        <p>Transaction data: HM Land Registry Price Paid Data 2022&#8211;2025. EPC data: MHCLG. Property boundaries: INSPIRE Index Polygons (HM Land Registry). Coordinates: OS Open UPRN (Ordnance Survey). Tax revenue data: HMRC; Welsh Revenue Authority.</p>
                     </div>
                 </div>
             </aside>
@@ -176,15 +317,48 @@
 
     <footer>
         <div class="container">
-            <p>Land Value Tax Calculator | Data: Aberdeenshire &amp; Aberdeen | For demonstration purposes only</p>
+            <p>Land Value Tax Calculator | Data: England &amp; Wales | For demonstration purposes only</p>
         </div>
     </footer>
 
-    <!-- Lightbox for methodology image -->
-    <div id="methodologyLightbox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
-        <div style="position:relative; max-width:95vw; max-height:95vh;">
-            <button onclick="document.getElementById('methodologyLightbox').style.display='none';" style="position:absolute; top:-36px; right:0; background:none; border:none; color:white; font-size:28px; cursor:pointer; line-height:1;">✕</button>
-            <img src="land_value_revised_analysis.png" alt="Revised Land Value Analysis" style="max-width:95vw; max-height:90vh; border-radius:6px; display:block;">
+    <!-- Methodology Modal -->
+    <div id="methodologyModal" class="modal-overlay">
+        <div class="modal-box modal-wide">
+            <button class="modal-close" id="closeMethodologyModal" aria-label="Close">&times;</button>
+            <h3>More detail on methodology</h3>
+            <div class="modal-table-wrap">
+                <table>
+                    <thead><tr><th>Step</th><th>Step Name</th><th>Simple Description</th><th>Technical Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>Data Loading and Initial Cleaning</td><td>Download and tidy up the four raw datasets &#8212; Land Registry sales, property addresses, energy certificates, and plot boundaries &#8212; ready for processing.</td><td>Load LR PPD, OS Open UPRN, EPC (348 LA files), and INSPIRE GML batches; standardise columns, deduplicate EPC on UPRN, batch-reproject INSPIRE to WGS84, write clean parquets and GeoPackages.</td></tr>
+                        <tr><td>2</td><td>Address Normalisation</td><td>Reformat addresses in both the sales data and the energy certificates so they can be reliably compared and matched against each other.</td><td>Uppercase, strip punctuation, expand abbreviations (ST&#8594;STREET etc.), and concatenate component fields into a single normalised string per dataset; postcode excluded from string and used as match key.</td></tr>
+                        <tr><td>3</td><td>Land Registry to EPC Fuzzy Match</td><td>Find the energy certificate that belongs to each property sale, so that floor area and building details can be linked to the sale price.</td><td>Two-pass match within postcode: exact string match first, then token-ratio fuzzy match on residuals; confidence threshold applied; unmatched records flagged for postcode centroid fallback.</td></tr>
+                        <tr><td>4</td><td>Assign Coordinates</td><td>Give each property sale a precise location &#8212; either the exact address point if matched, or the centre of its postcode otherwise.</td><td>Key-join EPC UPRN to OS Open UPRN for precise lat/lon; postcode centroid from ONS Postcode Directory as fallback; coordinate type flag added to all records.</td></tr>
+                        <tr><td>5</td><td>Attach EPC Attributes</td><td>Add the physical building details &#8212; floor area, property type, age, and energy rating &#8212; to each matched sale record.</td><td>Carry forward floor_area_m2, property_type, built_form, construction_age_band, and energy_rating from matched EPC certificates; unmatched records flagged with imputed floor area by property type.</td></tr>
+                        <tr><td>6</td><td>Spatial Join to INSPIRE Polygons</td><td>Work out which registered land parcel each property sits on, and calculate the size of that plot.</td><td>GeoPandas spatial join across 7 INSPIRE batch GeoPackages; assigns inspire_id and plot_area_m2 from polygon geometry; records categorised as polygon-matched, UPRN-only, or postcode-centroid.</td></tr>
+                        <tr><td>7</td><td>Plot Area Filter</td><td>Remove implausibly tiny or very large plots from the training data, as they give unreliable signals about land value per square metre.</td><td>Lower bound ~10 m&#178; removes artefact slivers; upper bound ~10,000 m&#178; excludes very large sites from model training only; large polygons retained for display; thresholds set from Step 6 size distribution.</td></tr>
+                        <tr><td>8</td><td>Building Value Model</td><td>Estimate what the building alone is worth, using prices paid in cheap areas where land adds little value. The remainder of the sale price is treated as the land&#8217;s value.</td><td>Gradient boosting model trained on North East + Wales transactions below national P30 price/m&#178;; features: log floor area, property type, built form, age band, energy rating; no location inputs. Applied nationally: land_value_est = price &#8722; building_value_est. Flats and leaseholds excluded throughout.</td></tr>
+                        <tr><td>9</td><td>Grid Construction</td><td>Divide England and Wales into a regular grid of 100 m &#215; 100 m squares, clipped to the coastline.</td><td>100 m raster constructed in British National Grid, clipped to OS land boundary; each cell assigned centroid lat/lon and a data-presence category (INSPIRE-matched, postcode fallback, or empty).</td></tr>
+                        <tr><td>10</td><td>Grid Surface Assembly</td><td>Spread each property&#8217;s estimated land value across the grid using a distance-decay formula, blending towards a low agricultural baseline in areas with sparse sales data.</td><td>FFT convolution on 100 m raster; exponential decay h = 0.3 km, radius 3 km; Bayesian prior (W_PRIOR = 2.0, floor &#163;2/m&#178;); sqrt plot-area normalisation (alpha &#8776; 0.5); negative LV clamped to zero but retained in denominator.</td></tr>
+                        <tr><td>11</td><td>Grid Surface Validation</td><td>Check how accurately the finished grid predicts actual sale prices by comparing the grid&#8217;s values back against the transactions used to build it.</td><td>Reconstruct predicted_price = grid_lv &#215; sqrt(REF_AREA &#215; effective_plot_area) + building_value_est per transaction; report R&#178;, RMSE, MAE, MdAPE, and bias by quality band, region, and price decile.</td></tr>
+                        <tr><td>12</td><td>PMTiles Generation</td><td>Package the grid and all land parcel boundaries into a single map tile file for the web app, covering the whole country at every zoom level.</td><td>Three-pass tippecanoe: Pass A &#8212; background grid z6&#8211;13 (no-drop); Pass B &#8212; grid + parcels z6&#8211;16 (drop-densest); Pass C &#8212; tile-join merge to land_values.pmtiles (7.56 GB). Parcels assigned LV/m&#178; by sampling grid at polygon centroid.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="modal-overlay">
+        <div class="modal-box modal-wide">
+            <button class="modal-close" id="closeResultsModal" aria-label="Close">&times;</button>
+            <h3>Results from land value modelling</h3>
+            <div class="modal-charts">
+                <img src="charts/charts_scatter.png" alt="Predicted vs actual price scatter">
+                <img src="charts/charts_histogram.png" alt="Land value distribution histogram">
+                <img src="charts/charts_regions.png" alt="Land value by region">
+                <img src="charts/charts_total_lv.png" alt="Total land value by region">
+            </div>
         </div>
     </div>
 
@@ -192,19 +366,14 @@
     <script src="https://unpkg.com/pmtiles@3/dist/pmtiles.js"></script>
     <script src="app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var link = document.getElementById('methodology-link');
-            var lightbox = document.getElementById('methodologyLightbox');
-            if (link && lightbox) {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    lightbox.style.display = 'flex';
-                });
-                lightbox.addEventListener('click', function(e) {
-                    if (e.target === lightbox) lightbox.style.display = 'none';
-                });
-            }
-        });
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        document.getElementById('openMethodologyModal').addEventListener('click', function(e) { e.preventDefault(); openModal('methodologyModal'); });
+        document.getElementById('openResultsModal').addEventListener('click', function(e) { e.preventDefault(); openModal('resultsModal'); });
+        document.getElementById('closeMethodologyModal').addEventListener('click', function() { closeModal('methodologyModal'); });
+        document.getElementById('closeResultsModal').addEventListener('click', function() { closeModal('resultsModal'); });
+        document.getElementById('methodologyModal').addEventListener('click', function(e) { if (e.target === this) closeModal('methodologyModal'); });
+        document.getElementById('resultsModal').addEventListener('click', function(e) { if (e.target === this) closeModal('resultsModal'); });
     </script>
 </body>
 </html>

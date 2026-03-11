@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "tax_year": "2022-23",
+    "sources": "ONS CRPSF FYE 2023; HMRC; Welsh Revenue Authority",
+    "total_land_value_gbp": 10022500000000,
+    "total_land_area_m2": 151246990000
+  },
+  "taxes": {
+    "income-tax":  { "annual_revenue_gbp": 230114000000, "annual": true  },
+    "nic":         { "annual_revenue_gbp": 161700000000, "annual": true  },
+    "cgt":         { "annual_revenue_gbp":  13770000000, "annual": true  },
+    "iht":         { "annual_revenue_gbp":   5760000000, "annual": true  },
+    "council-tax": { "annual_revenue_gbp":  39200000000, "annual": true  },
+    "sdlt":        { "annual_revenue_gbp":  15733000000, "annual": false },
+    "vat":         { "annual_revenue_gbp": 144600000000, "annual": true  },
+    "fuel":        { "annual_revenue_gbp":  22100000000, "annual": true  },
+    "alcohol":     { "annual_revenue_gbp":  11010000000, "annual": true  },
+    "tobacco":     { "annual_revenue_gbp":   7890000000, "annual": true  },
+    "ipt":         { "annual_revenue_gbp":   6720000000, "annual": true  },
+    "ved":         { "annual_revenue_gbp":   6520000000, "annual": true  },
+    "betting":     { "annual_revenue_gbp":   2300000000, "annual": true  },
+    "sdil":        { "annual_revenue_gbp":    310000000, "annual": true  }
+  }
+}
